@@ -1,0 +1,7 @@
+
+
+Sticky DB - THE WISH LIST
+-------------------------
+
+- Batch-input/update
+- getAll med "som array"-parameter eller liknande
