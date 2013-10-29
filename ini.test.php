@@ -1,11 +1,15 @@
 <? exit ?>
 
+; other ini files that will be used based on context and availability:
+; ini.local.php
+; ini.remote.php
+
 [default]
 
 type = mysql
 host = localhost
 user = root
-pass = "tasadcotw!"
+pass = ""
 name = test
 
 ; naming conventions
