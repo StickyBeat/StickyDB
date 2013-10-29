@@ -1065,8 +1065,34 @@ class StickyDB
 
 	public static function ini( $key, $default = null )
 	{
-		if( !stickydb::$iniData )
-			stickydb::$iniData = parse_ini_file( dirname( __FILE__ ) . '/ini.php', true );
+		if( !stickydb::$iniData ){
+
+			$inis = array(
+				'ini.php',
+				);
+
+			$remoteAddress = $_SERVER['REMOTE_ADDR'];
+
+			if( $remoteAddress == '127.0.0.1' or strrpos( $remoteAddress, '::1') == ( strlen( $remoteAddress ) - strlen( '::1' ) ) ){
+				$inis[] = 'ini.local.php';
+			}
+			else{
+				$inis[] = 'ini.remote.php';
+			}
+
+			$inis[] = 'ini.test.php';
+
+			foreach( $inis as $ini ){
+
+				$iniData = @parse_ini_file( dirname( __FILE__ ) . '/' . $ini, true );
+
+				if( $iniData !== false ){
+
+					stickydb::$iniData = $iniData;
+					break;
+				}
+			}
+		}
 
 		$section = 'default';
 
