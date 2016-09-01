@@ -6,7 +6,8 @@
 
 [default]
 
-type = mysql
+; types are 'mysql' or 'mysqli'
+type = mysqli
 host = localhost
 user = root
 pass = ""

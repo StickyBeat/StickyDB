@@ -64,6 +64,8 @@ class StickyDB
 	private $fields = array();
 	private $isNew = true;
 
+	private static $connection = null;
+
 	public static $executeQueries = true;
 	public static $echoQueries = false;
 
@@ -882,13 +884,30 @@ class StickyDB
 
 	public static function connect()
 	{
-	    $connection = mysql_connect( self::ini('host','localhost'), self::ini('user'), self::ini('pass') );
+		if( !self::$connection ){
 
-	    mysql_select_db( self::ini('name'), $connection );
+		    switch( self::ini('type') ){
 
-	    mysql_set_charset( self::ini('charset','utf8'), $connection );
+		    	default:
+		    	case'mysql':
+				    
+				    $connection = mysql_connect( self::ini('host','localhost'), self::ini('user'), self::ini('pass') );
+				    mysql_select_db( self::ini('name'), $connection );
+				    mysql_set_charset( self::ini('charset','utf8'), $connection );
 
-	    return $connection;
+				    break;
+
+		    	case'mysqli':
+				    
+				    $connection = mysqli_connect( self::ini('host','localhost'), self::ini('user'), self::ini('pass'), self::ini('name') );
+
+				    break;
+		    }
+
+		    self::$connection = $connection;
+		}
+		
+	    return self::$connection;
 	}
 
 	public static function query( $query )
@@ -918,9 +937,21 @@ class StickyDB
 
 		    $connection = self::connect();
 
-		    $result = mysql_query( $query, $connection );
+		    switch( self::ini('type') ){
 
-		    if( $error = mysql_error( $connection ) ){
+		    	default:
+		    	case'mysql':
+				    $result = mysql_query( $query, $connection );
+				    $error = mysql_error( $connection );
+				    break;
+
+				case'mysqli':
+				    $result = mysqli_query( $connection, $query );
+				    $error = mysqli_error( $connection );
+					break;
+			}
+
+		    if( $error ){
 
 		    	throw new Exception(
 
@@ -942,7 +973,15 @@ class StickyDB
 	public static function insertId()
 	{
 		if( StickyDB::$executeQueries ){
-			return mysql_insert_id();
+
+		    switch( self::ini('type') ){
+		    	default:
+		    	case'mysql':
+					return mysql_insert_id();
+
+				case'mysqli':
+					return mysqli_insert_id( self::connect() );
+			}
 		}
 		else{
 			return 1234;
@@ -951,10 +990,18 @@ class StickyDB
 
 	public static function fetch( $result )
 	{
-		if( is_resource( $result ) ){
+		if( is_resource( $result ) || $result instanceof mysqli_result ){
 
-			return mysql_fetch_assoc( $result );
+		    switch( self::ini('type') ){
 
+		    	default:
+		    	case'mysql':
+					return mysql_fetch_assoc( $result );
+
+				case'mysqli':
+					return mysqli_fetch_assoc( $result );
+
+			}
 		}
 		else if( is_array( $result ) ){
 
@@ -985,7 +1032,15 @@ class StickyDB
 
 	public static function escape( $str )
 	{
-		return mysql_escape_string( $str );
+	    switch( self::ini('type') ){
+
+	    	default:
+	    	case'mysql':
+				return mysql_escape_string( $str );
+
+			case'mysqli':
+				return mysqli_real_escape_string( self::connect(), $str );
+		}
 	}
 
 	public static function quoteValue( $str )
